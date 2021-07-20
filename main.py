@@ -5,7 +5,7 @@ import os
 
 app = FastAPI()
 url = "ftp-serv.herokuapp.com"
-files_dir = "files/"
+files_dir = "files"
 
 
 try:
@@ -37,8 +37,7 @@ def error_log(error):  # просто затычка, будет дописан�
 async def create_tables():
     connect, cursor = db_connect()
     try:
-        cursor.execute('CREATE TABLE IF NOT EXISTS files(id INTEGER NOT NULL UNIQUE PRIMARY KEY,'
-                       'name TEXT)')
+        cursor.execute('CREATE TABLE IF NOT EXISTS files(id INTEGER PRIMARY KEY, name TEXT)')
         connect.commit()
         return True
     except Exception as e:
@@ -71,7 +70,7 @@ async def get_file():
             print(res)
         except IndexError:
             return JSONResponse(status_code=404)
-        return FileResponse(f"{files_dir}/res")
+        return FileResponse(f"{files_dir}/{res}")
     except Exception as e:
         error_log(e)
     finally:
@@ -84,13 +83,13 @@ async def upload_file(file: UploadFile = File(...)):
     global url
     connect, cursor = db_connect()
     try:
-        with open(file.filename, "wb") as out_file:
+        with open(f"{files_dir}/{file.filename}", "wb") as out_file:
             content = await file.read()
             out_file.write(content)
         print(os.stat(file.filename).st_size)
-        cursor.execute("SELECT count(id) FROM links")
+        cursor.execute("SELECT count(id) FROM files")
         max_id = int(cursor.fetchall()[0][0]) + 1
-        cursor.execute(f"INSERT INTO links VALUES({max_id}, '{file.filename}')")
+        cursor.execute(f"INSERT INTO files VALUES({max_id}, '{file.filename}')")
         connect.commit()
         return f"{url}/get/file_{max_id}"
     except Exception as e:
