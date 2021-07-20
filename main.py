@@ -1,10 +1,10 @@
-from fastapi import FastAPI, Request, Depends, File, UploadFile
+from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import JSONResponse, FileResponse
 import psycopg2
 import os
 
 app = FastAPI()
-url = "ftp-serv.herokuapp.com"
+url = os.environ.get("url")
 
 
 def db_connect():
@@ -18,36 +18,31 @@ def db_connect():
     return con, cur
 
 
-def error_log(error):  # просто затычка, будет дописано
-    try:
-        print(error)
-    except Exception as e:
-        print(e)
-        print("Возникла ошибка при обработке errorLog (Это вообще как?)")
+def create_tables():
+    connect, cursor = db_connect()
+    cursor.execute('CREATE TABLE IF NOT EXISTS files(id INTEGER PRIMARY KEY, name TEXT)')
+    connect.commit()
+    cursor.close()
+    connect.close()
 
 
-@app.get("/tables/create")  # потом удалить
-async def create_tables():
+create_tables()
+
+
+@app.post("/upload")
+async def upload_file(file: UploadFile = File(...)):
+    global url
     connect, cursor = db_connect()
     try:
-        cursor.execute('CREATE TABLE IF NOT EXISTS files(id INTEGER PRIMARY KEY, name TEXT)')
+        with open(f"{file.filename}", "wb") as out_file:
+            content = await file.read()
+            out_file.write(content)
+        # print(os.stat(file.filename).st_size)
+        cursor.execute("SELECT count(id) FROM files")
+        max_id = int(cursor.fetchall()[0][0]) + 1
+        cursor.execute(f"INSERT INTO files VALUES({max_id}, '{file.filename}')")
         connect.commit()
-        return True
-    except Exception as e:
-        error_log(e)
-    finally:
-        cursor.close()
-        connect.close()
-
-
-@app.get("/tables/check")  # потом удалить
-async def check_tables():
-    connect, cursor = db_connect()
-    try:
-        cursor.execute('SELECT * FROM files')
-        return cursor.fetchall()
-    except Exception as e:
-        error_log(e)
+        return f"{url}/get/file_{max_id}"
     finally:
         cursor.close()
         connect.close()
@@ -64,29 +59,6 @@ async def get_file(id):
         except IndexError:
             return JSONResponse(status_code=404)
         return FileResponse(f"{res}")
-    except Exception as e:
-        error_log(e)
-    finally:
-        cursor.close()
-        connect.close()
-
-
-@app.post("/upload")
-async def upload_file(file: UploadFile = File(...)):
-    global url
-    connect, cursor = db_connect()
-    try:
-        with open(f"{file.filename}", "wb") as out_file:
-            content = await file.read()
-            out_file.write(content)
-        print(os.stat(file.filename).st_size)
-        cursor.execute("SELECT count(id) FROM files")
-        max_id = int(cursor.fetchall()[0][0]) + 1
-        cursor.execute(f"INSERT INTO files VALUES({max_id}, '{file.filename}')")
-        connect.commit()
-        return f"{url}/get/file_{max_id}"
-    except Exception as e:
-        error_log(e)
     finally:
         cursor.close()
         connect.close()
