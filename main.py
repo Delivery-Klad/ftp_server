@@ -54,7 +54,7 @@ async def check_tables():
 
 
 @app.get("/get/file_{id}")
-async def get_file():
+async def get_file(id):
     connect, cursor = db_connect()
     try:
         cursor.execute(f"SELECT file FROM files WHERE id={id}")
