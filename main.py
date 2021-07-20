@@ -37,8 +37,6 @@ def error_log(error):  # просто затычка, будет дописан�
 async def create_tables():
     connect, cursor = db_connect()
     try:
-        cursor.execute('DROP TABLE files')
-        connect.commit()
         cursor.execute('CREATE TABLE IF NOT EXISTS files(id INTEGER NOT NULL UNIQUE PRIMARY KEY,'
                        'name TEXT)')
         connect.commit()
@@ -86,7 +84,7 @@ async def upload_file(file: UploadFile = File(...)):
     global url
     connect, cursor = db_connect()
     try:
-        with open(files_dir + file.filename, "wb") as out_file:
+        with open(file.filename, "wb") as out_file:
             content = await file.read()
             out_file.write(content)
         print(os.stat(file.filename).st_size)
