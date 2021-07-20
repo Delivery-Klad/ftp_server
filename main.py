@@ -5,13 +5,6 @@ import os
 
 app = FastAPI()
 url = "ftp-serv.herokuapp.com"
-files_dir = "files"
-
-
-try:
-    os.mkdir("files")
-except FileExistsError:
-    pass
 
 
 def db_connect():
@@ -70,7 +63,7 @@ async def get_file():
             print(res)
         except IndexError:
             return JSONResponse(status_code=404)
-        return FileResponse(f"{files_dir}/{res}")
+        return FileResponse(f"{res}")
     except Exception as e:
         error_log(e)
     finally:
@@ -83,7 +76,7 @@ async def upload_file(file: UploadFile = File(...)):
     global url
     connect, cursor = db_connect()
     try:
-        with open(f"{files_dir}/{file.filename}", "wb") as out_file:
+        with open(f"{file.filename}", "wb") as out_file:
             content = await file.read()
             out_file.write(content)
         print(os.stat(file.filename).st_size)
