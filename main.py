@@ -57,7 +57,7 @@ async def check_tables():
 async def get_file(id):
     connect, cursor = db_connect()
     try:
-        cursor.execute(f"SELECT file FROM files WHERE id={id}")
+        cursor.execute(f"SELECT name FROM files WHERE id={id}")
         try:
             res = cursor.fetchall()[0][0]
             print(res)
