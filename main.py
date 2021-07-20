@@ -5,6 +5,7 @@ import psycopg2
 import os
 
 app = FastAPI()
+url = "ftp-serv.herokuapp.com/"
 
 
 def db_connect():
@@ -26,7 +27,7 @@ def error_log(error):  # просто затычка, будет дописан�
         print("Возникла ошибка при обработке errorLog (Это вообще как?)")
 
 
-@app.get("/tables/create", tags=["API"])  # потом удалить
+@app.get("/tables/create")  # потом удалить
 async def create_tables():
     connect, cursor = db_connect()
     try:
@@ -41,8 +42,27 @@ async def create_tables():
         connect.close()
 
 
-@app.post("/upload", tags=["Files"])
+@app.get("/tables/check")  # потом удалить
+async def check_tables():
+    connect, cursor = db_connect()
+    try:
+        cursor.execute('SELECT * FROM files')
+        return cursor.fetchall()
+    except Exception as e:
+        error_log(e)
+    finally:
+        cursor.close()
+        connect.close()
+
+
+@app.get("/get/")
+async def get_file():
+    pass
+
+
+@app.post("/upload")
 async def upload_file(file: UploadFile = File(...)):
+    global url
     connect, cursor = db_connect()
     try:
         with open(file.filename, "wb") as out_file:
@@ -51,9 +71,9 @@ async def upload_file(file: UploadFile = File(...)):
         print(os.stat(file.filename).st_size)
         cursor.execute("SELECT count(id) FROM links")
         max_id = int(cursor.fetchall()[0][0]) + 1
-        cursor.execute(f"INSERT INTO links VALUES({max_id}, '{link}')")
+        cursor.execute(f"INSERT INTO links VALUES({max_id}, '{file.filename}')")
         connect.commit()
-        return max_id
+        return url + max_id
     except Exception as e:
         error_log(e)
     finally:
