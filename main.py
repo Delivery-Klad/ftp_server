@@ -1,11 +1,17 @@
 from fastapi import FastAPI, Request, Depends, File, UploadFile
-from fastapi.responses import JSONResponse, RedirectResponse
-from starlette.responses import StreamingResponse
+from fastapi.responses import JSONResponse, FileResponse
 import psycopg2
 import os
 
 app = FastAPI()
-url = "ftp-serv.herokuapp.com/"
+url = "ftp-serv.herokuapp.com"
+files_dir = "files/"
+
+
+try:
+    os.mkdir("files")
+except FileExistsError:
+    pass
 
 
 def db_connect():
@@ -31,8 +37,10 @@ def error_log(error):  # просто затычка, будет дописан�
 async def create_tables():
     connect, cursor = db_connect()
     try:
+        cursor.execute('DROP TABLE files')
+        connect.commit()
         cursor.execute('CREATE TABLE IF NOT EXISTS files(id INTEGER NOT NULL UNIQUE PRIMARY KEY,'
-                       'last_activity TIMESTAMP)')
+                       'name TEXT)')
         connect.commit()
         return True
     except Exception as e:
@@ -55,9 +63,22 @@ async def check_tables():
         connect.close()
 
 
-@app.get("/get/")
+@app.get("/get/file_{id}")
 async def get_file():
-    pass
+    connect, cursor = db_connect()
+    try:
+        cursor.execute(f"SELECT file FROM files WHERE id={id}")
+        try:
+            res = cursor.fetchall()[0][0]
+            print(res)
+        except IndexError:
+            return JSONResponse(status_code=404)
+        return FileResponse(f"{files_dir}/res")
+    except Exception as e:
+        error_log(e)
+    finally:
+        cursor.close()
+        connect.close()
 
 
 @app.post("/upload")
@@ -65,7 +86,7 @@ async def upload_file(file: UploadFile = File(...)):
     global url
     connect, cursor = db_connect()
     try:
-        with open(file.filename, "wb") as out_file:
+        with open(files_dir + file.filename, "wb") as out_file:
             content = await file.read()
             out_file.write(content)
         print(os.stat(file.filename).st_size)
@@ -73,7 +94,7 @@ async def upload_file(file: UploadFile = File(...)):
         max_id = int(cursor.fetchall()[0][0]) + 1
         cursor.execute(f"INSERT INTO links VALUES({max_id}, '{file.filename}')")
         connect.commit()
-        return url + max_id
+        return f"{url}/get/file_{max_id}"
     except Exception as e:
         error_log(e)
     finally:
