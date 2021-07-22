@@ -23,8 +23,10 @@ def create_tables():
     connect, cursor = db_connect()
     cursor.execute('DROP TABLE files')
     connect.commit()
-    cursor.execute('CREATE TABLE IF NOT EXISTS files(id INTEGER PRIMARY KEY,'
-                   'name TEXT NOT NULL, owner TEXT NULL)')
+    cursor.execute('CREATE TABLE IF NOT EXISTS files('
+                   'id INTEGER PRIMARY KEY,'
+                   'name TEXT NOT NULL,'
+                   'owner TEXT NULL)')
     connect.commit()
     cursor.close()
     connect.close()
@@ -45,7 +47,7 @@ async def upload_file(file: UploadFile = File(...)):
         # print(os.stat(file.filename).st_size)
         cursor.execute("SELECT count(id) FROM files")
         max_id = int(cursor.fetchall()[0][0]) + 1
-        cursor.execute(f"INSERT INTO files VALUES({max_id}, '{name}', {None})")
+        cursor.execute(f"INSERT INTO files (id, name) VALUES ({max_id}, '{name}')")
         connect.commit()
         return f"{url}/get/file_{max_id}"
     finally:
