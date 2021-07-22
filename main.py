@@ -1,5 +1,6 @@
 from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import JSONResponse, FileResponse
+from datetime import datetime
 import psycopg2
 import os
 
@@ -20,7 +21,10 @@ def db_connect():
 
 def create_tables():
     connect, cursor = db_connect()
-    cursor.execute('CREATE TABLE IF NOT EXISTS files(id INTEGER PRIMARY KEY, name TEXT)')
+    cursor.execute('DROP TABLE files')
+    connect.commit()
+    cursor.execute('CREATE TABLE IF NOT EXISTS files(id INTEGER PRIMARY KEY,'
+                   'name TEXT NOT NULL, owner TEXT NULL)')
     connect.commit()
     cursor.close()
     connect.close()
@@ -34,13 +38,14 @@ async def upload_file(file: UploadFile = File(...)):
     global url
     connect, cursor = db_connect()
     try:
-        with open(f"{file.filename}", "wb") as out_file:
+        name = f"{file.filename} {datetime.utcnow().strftime('%d/%m/%Y %H:%M:%S.%f')}"
+        with open(f"{name}", "wb") as out_file:
             content = await file.read()
             out_file.write(content)
         # print(os.stat(file.filename).st_size)
         cursor.execute("SELECT count(id) FROM files")
         max_id = int(cursor.fetchall()[0][0]) + 1
-        cursor.execute(f"INSERT INTO files VALUES({max_id}, '{file.filename}')")
+        cursor.execute(f"INSERT INTO files VALUES({max_id}, '{name}', {None})")
         connect.commit()
         return f"{url}/get/file_{max_id}"
     finally:
