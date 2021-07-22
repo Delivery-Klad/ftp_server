@@ -38,7 +38,7 @@ async def upload_file(file: UploadFile = File(...)):
     global url
     connect, cursor = db_connect()
     try:
-        name = f"{file.filename} {datetime.utcnow().strftime('%d/%m/%Y %H:%M:%S.%f')}"
+        name = f"{datetime.utcnow().strftime('%d-%m-%Y %H:%M:%S:%f')[:-3]}{file.filename}"
         with open(f"{name}", "wb") as out_file:
             content = await file.read()
             out_file.write(content)
