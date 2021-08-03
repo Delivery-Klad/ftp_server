@@ -1,4 +1,7 @@
-# ftp_server
+# FTP server
+
+Python version: 3.7.9
+
 | Variable         | Value                                            |
 |------------------|--------------------------------------------------|
 | url              | server url (ex. https://ftp-serv.herokuapp.com)  |
