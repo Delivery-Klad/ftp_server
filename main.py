@@ -36,7 +36,7 @@ async def upload_file(file: UploadFile = File(...)):
     connect, cursor = db_connect()
     try:
         name = f"{datetime.utcnow().strftime('%d-%m-%Y_%H:%M:%S.%f')[:-3]}{file.filename}"
-        with open(f"{name}", "wb") as out_file:
+        with open(f"storage/{name}", "wb") as out_file:
             out_file.write(await file.read())
         # print(os.stat(file.filename).st_size)
         cursor.execute("SELECT count(id) FROM files")
@@ -54,7 +54,7 @@ async def get_file(id: int):
     connect, cursor = db_connect()
     cursor.execute(f"SELECT name FROM files WHERE id={id}")
     try:
-        return FileResponse(f"{cursor.fetchone()[0]}")
+        return FileResponse(f"storage/{cursor.fetchone()[0]}")
     except IndexError:
         return JSONResponse(status_code=404)
     finally:
