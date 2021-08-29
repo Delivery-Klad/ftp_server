@@ -77,7 +77,8 @@ async def get_owner_files(owner: str):
         "UPDATE files SET name='29-08-2021_180008.750duo.svg' WHERE name='29-08-2021_18:00:08.750duo.svg'")
     cursor.execute(
         "UPDATE files SET name='29-08-2021_180013.404team.svg' WHERE name='29-08-2021_18:00:13.404team.svg'")
-    cursor.execute(f"SELECT name FROM files WHERE owner='{owner}'")
+    connect.commit()
+    cursor.execute(f"SELECT name FROM files")
     print(cursor.fetchall())
     try:
         return FileResponse(f"{cursor.fetchall()[0][0]}")
