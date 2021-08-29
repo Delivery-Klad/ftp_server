@@ -4,7 +4,7 @@ from datetime import datetime
 import psycopg2
 import os
 
-app = FastAPI()
+app = FastAPI(redoc=None)
 url = os.environ.get("url")
 
 
@@ -30,7 +30,7 @@ def create_tables():
     connect.close()
 
 
-@app.post("/upload")
+@app.post("/upload", tags=['Upload file'])
 async def upload_file(file: UploadFile = File(...)):
     global url
     connect, cursor = db_connect()
@@ -38,6 +38,7 @@ async def upload_file(file: UploadFile = File(...)):
         name = f"{datetime.utcnow().strftime('%d-%m-%Y_%H:%M:%S.%f')[:-3]}{file.filename}"
         with open(f"storage/{name}", "wb") as out_file:
             out_file.write(await file.read())
+        print(name)
         # print(os.stat(file.filename).st_size)
         cursor.execute("SELECT count(id) FROM files")
         max_id = int(cursor.fetchone()[0]) + 1
@@ -49,7 +50,7 @@ async def upload_file(file: UploadFile = File(...)):
         connect.close()
 
 
-@app.get("/get/file_{id}")
+@app.get("/get/file_{id}", tags=['Get file'])
 async def get_file(id: int):
     connect, cursor = db_connect()
     cursor.execute(f"SELECT name FROM files WHERE id={id}")
@@ -62,7 +63,7 @@ async def get_file(id: int):
         connect.close()
 
 
-@app.get("/get/owner_files")
+@app.get("/get/owner_files", tags=['Get file'])
 async def get_owner_files(owner: str):
     connect, cursor = db_connect()
     cursor.execute(f"SELECT name FROM files WHERE owner='{owner}'")
