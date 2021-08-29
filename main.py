@@ -36,6 +36,7 @@ async def upload_file(file: UploadFile = File(...)):
     connect, cursor = db_connect()
     try:
         name = f"{datetime.utcnow().strftime('%d-%m-%Y_%H:%M:%S.%f')[:-3]}{file.filename}"
+        name.replace(':', '')
         with open(f"storage/{name}", "wb") as out_file:
             out_file.write(await file.read())
         print(name)
@@ -66,7 +67,7 @@ async def get_file(id: int):
 @app.get("/get/owner_files", tags=['Get file'])
 async def get_owner_files(owner: str):
     connect, cursor = db_connect()
-    cursor.execute(f"SELECT name FROM files WHERE owner='{owner}'")
+    cursor.execute(f"SELECT name FROM files")
     try:
         return FileResponse(f"{cursor.fetchall()[0][0]}")
     except IndexError:
