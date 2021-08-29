@@ -36,7 +36,7 @@ async def upload_file(file: UploadFile = File(...)):
     connect, cursor = db_connect()
     try:
         name = f"{datetime.utcnow().strftime('%d-%m-%Y_%H:%M:%S.%f')[:-3]}{file.filename}"
-        name.replace(':', '')
+        name = name.replace(':', '')
         with open(f"storage/{name}", "wb") as out_file:
             out_file.write(await file.read())
         print(name)
@@ -67,21 +67,9 @@ async def get_file(id: int):
 @app.get("/get/owner_files", tags=['Get file'])
 async def get_owner_files(owner: str):
     connect, cursor = db_connect()
-    cursor.execute("UPDATE files SET name='29-08-2021_175408.100flame.svg' WHERE "
-                   "name='29-08-2021_17:54:08.100flame.svg'")
-    cursor.execute("UPDATE files SET name='29-08-2021_175622.848meditation.svg' WHERE "
-                   "name='29-08-2021_17:56:22.848meditation.svg'")
-    cursor.execute(
-        "UPDATE files SET name='29-08-2021_175919.202individual.svg' WHERE name='29-08-2021_17:59:19.202individual.svg'")
-    cursor.execute(
-        "UPDATE files SET name='29-08-2021_180008.750duo.svg' WHERE name='29-08-2021_18:00:08.750duo.svg'")
-    cursor.execute(
-        "UPDATE files SET name='29-08-2021_180013.404team.svg' WHERE name='29-08-2021_18:00:13.404team.svg'")
-    connect.commit()
-    cursor.execute(f"SELECT name FROM files")
-    print(cursor.fetchall())
+    cursor.execute(f"SELECT name FROM files WHERE owner='{owner}'")
     try:
-        return FileResponse(f"{cursor.fetchall()[0][0]}")
+        return f"{cursor.fetchall()[0][0]}"
     except IndexError:
         return JSONResponse(status_code=404)
     finally:
@@ -89,4 +77,6 @@ async def get_owner_files(owner: str):
         connect.close()
 
 
-create_tables()
+@app.on_event("startup")
+async def startup():
+    create_tables()
