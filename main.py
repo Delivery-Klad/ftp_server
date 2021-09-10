@@ -1,11 +1,13 @@
 from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import JSONResponse, FileResponse
+from dependencies import get_settings
 from datetime import datetime
 import psycopg2
 import os
 
+settings = get_settings()
 app = FastAPI(redoc=None)
-url = os.environ.get("url")
+url = settings.url
 
 
 def db_connect():
