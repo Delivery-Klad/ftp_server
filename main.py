@@ -71,7 +71,7 @@ async def get_owner_files():
     connect, cursor = db_connect()
     cursor.execute(f"SELECT * FROM files")
     try:
-        return f"{cursor.fetchall()[0][0]}"
+        return f"{cursor.fetchall()}"
     except IndexError:
         return JSONResponse(status_code=404)
     finally:
