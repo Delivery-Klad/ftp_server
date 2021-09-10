@@ -66,10 +66,10 @@ async def get_file(id: int):
         connect.close()
 
 
-@app.get("/get/owner_files", tags=['Get file'])
-async def get_owner_files(owner: str):
+@app.get("/get/all", tags=['Get files'])
+async def get_owner_files():
     connect, cursor = db_connect()
-    cursor.execute(f"SELECT name FROM files WHERE owner='{owner}'")
+    cursor.execute(f"SELECT * FROM files")
     try:
         return f"{cursor.fetchall()[0][0]}"
     except IndexError:
