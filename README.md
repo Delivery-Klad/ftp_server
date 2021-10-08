@@ -1,6 +1,6 @@
 # FTP server
 
-Python version: 3.9.6
+Python version: 3.7.9
 
 | Variable         | Value                                            |
 |------------------|--------------------------------------------------|
