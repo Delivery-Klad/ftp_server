@@ -1,4 +1,4 @@
-# FTP server
+# Very simple FTP-server
 
 Python version: 3.7.9
 
